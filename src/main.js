@@ -1,29 +1,60 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import "element-plus/dist/index.css"
-import ElementPlus from 'element-plus'
+import { createPinia } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
-import {createPinia} from 'pinia'
-import api from './api/api.js'
-import config from './config/index.js'
+import 'element-plus/dist/index.css'
+import ElementPlus from 'element-plus'
+import "./api/mock.js"
+import api from "./api/api.js"
+import { useAllDataStore } from "@/stores/index.js"
 
-async function bootstrap() {
-  if (config.mock) {
-    await import('./api/mock.js')
-  }
-
-  const pinia = createPinia()
-  const app = createApp(App)
-  app.use(pinia)
-  app.use(router)
-  app.use(ElementPlus)
-  app.config.globalProperties.api = api
-
-  for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-    app.component(key, component)
-  }
-  app.mount('#app')
+// Fix: if user manually types path without hash (e.g. /login), redirect to hash root
+if (window.location.pathname !== '/') {
+  window.location.replace('/' + (window.location.hash || '#/'))
 }
-bootstrap()
 
+function routeExists(to) {
+  return !!router.getRoutes().find(r => r.name === to.name || r.path === to.path)
+}
+
+const whitelist = ['login', '404']
+
+router.beforeEach((to, from) => {
+  const store = useAllDataStore()
+  const token = store.state.token
+
+  if (!token && !whitelist.includes(to.name)) {
+    return { name: 'login', replace: true }
+  }
+
+  if (token && to.name === 'login') {
+    return { name: 'home', replace: true }
+  }
+
+  if (!whitelist.includes(to.name) && !routeExists(to)) {
+    return { name: '404', replace: true }
+  }
+})
+
+const app = createApp(App)
+const pinia = createPinia()
+
+pinia.use(piniaPluginPersistedstate)
+app.use(pinia)
+const store = useAllDataStore()
+app.config.globalProperties.$api = api
+
+if (store.state.menuList && store.state.menuList.length > 0) {
+  store.addMenu(router)
+}
+store.addMenu(router, "refresh")
+app.use(router)
+
+app.use(ElementPlus)
+
+app.mount('#app')
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, component)
+}

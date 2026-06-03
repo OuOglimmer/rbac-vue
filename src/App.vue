@@ -1,17 +1,26 @@
 <script setup>
-
 </script>
 
 <template>
   <router-view />
 </template>
 
-
-
 <style lang="less">
-html,body{
-  height: 100%;
-  margin: 0; /* 清除默认边距，避免滚动条 */
+html, body {
+  margin: 0;
   padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+#app {
+  width: 100%;
+  height: 100%;
+}
+* {
+  transition: all 0.3s ease-in-out;
+}
+.no-transition {
+  transition: none !important;
 }
 </style>

@@ -1,40 +1,44 @@
 <script setup>
 import CommonAside from '@/components/CommonAside.vue'
 import CommonHeader from '@/components/CommonHeader.vue'
-
+import CommonTab from '@/components/CommonTab.vue'
 </script>
 
 <template>
 <div class="common-layout">
   <el-container class="lay-container">
-    <!-- 左侧自定义组件 -->
-     <common-aside />
-     <!-- 右侧自定义组件 -->
-     <el-container class="el-container">
-      <!-- 顶部自定义组件 -->
+    <common-aside />
+    <el-container>
       <el-header class="el-header">
         <common-header />
       </el-header>
-      <!-- 内容区域 -->
-      <el-main class="righ-main">
+      <common-tab />
+      <el-main class="right-main">
         <router-view />
       </el-main>
-     </el-container>
+    </el-container>
   </el-container>
 </div>
 </template>
 
 <style scoped lang="less">
-html,body{
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html, body, #app {
   height: 100%;
-  width: 100%;
 }
-
 .common-layout,
-.lay-container{
-  height: 100vh;
+.lay-container {
+  height: 100%;
 }
-.el-header{
+.el-header {
   background-color: #333;
+}
+.right-main {
+  height: 100%;
+  background-color: #f5f7fa;
 }
 </style>
