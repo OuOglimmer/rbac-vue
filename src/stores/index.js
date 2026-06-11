@@ -13,16 +13,32 @@ function initState() {
     currentMenu: null,
     menuList: [],
     token: "",
+    role: "",
+    userInfo: null,
     routerList: []
+  }
+}
+
+function restoreFromStorage() {
+  try {
+    const saved = localStorage.getItem('store')
+    if (!saved) return null
+    const parsed = JSON.parse(saved)
+    if (!parsed || !parsed.token) return null
+    return parsed
+  } catch {
+    return null
   }
 }
 
 export const useAllDataStore = defineStore('allData', () => {
   const state = ref(initState())
+  const routesLoaded = ref(false)
 
   watch(state, (newObj) => {
     if (!newObj.token) return
-    localStorage.setItem('store', JSON.stringify(newObj))
+    const { routerList: _, ...persistable } = newObj
+    localStorage.setItem('store', JSON.stringify(persistable))
   }, { deep: true })
 
   function selectMenu(val) {
@@ -43,53 +59,75 @@ export const useAllDataStore = defineStore('allData', () => {
     state.value.menuList = val
   }
 
-  function addMenu(router, type) {
-    if (type == "refresh") {
-      if (JSON.parse(localStorage.getItem('store'))) {
-        state.value = JSON.parse(localStorage.getItem('store'))
-        state.value.routerList = []
-      } else {
-        return
-      }
-    }
+  function restoreRoutes(router) {
+    const saved = restoreFromStorage()
+    if (!saved) return false
+
+    state.value.isCollapsed = saved.isCollapsed ?? false
+    state.value.tags = saved.tags ?? [{ path: '/home', name: 'home', label: '首页', icon: 'home' }]
+    state.value.currentMenu = saved.currentMenu ?? null
+    state.value.menuList = saved.menuList ?? []
+    state.value.token = saved.token ?? ""
+    state.value.role = saved.role ?? ""
+    state.value.userInfo = saved.userInfo ?? null
+    state.value.routerList = []
+
+    if (!state.value.menuList.length) return false
+
+    return rebuildRoutes(router)
+  }
+
+  function rebuildRoutes(router) {
+    state.value.routerList.forEach(fn => { if (fn) fn() })
+    state.value.routerList = []
+
     const menu = state.value.menuList
     const modules = import.meta.glob('../view/**/*.vue')
-    const routerArr = []
 
     menu.forEach((item) => {
       if (item.children) {
         item.children.forEach((child) => {
           const url = `../view/${child.url}.vue`
           child.component = modules[url]
-          routerArr.push(child)
+          routerArrPush(child)
         })
       } else {
         const url = `../view/${item.url}.vue`
         item.component = modules[url]
-        routerArr.push(item)
+        routerArrPush(item)
       }
     })
 
-    state.value.routerList.forEach((removeRoute) => {
-      if (removeRoute) removeRoute()
-    })
-    state.value.routerList = []
-
-    routerArr.forEach((item) => {
+    function routerArrPush(item) {
       if (item.component) {
         const removeRoute = router.addRoute('main', item)
         state.value.routerList.push(removeRoute)
       } else {
         console.warn(`没有找到组件：${item.url}`)
       }
-    })
+    }
+
+    routesLoaded.value = true
+    return true
+  }
+
+  function loadRoutesFromMenu(router) {
+    if (!state.value.menuList.length) return false
+    return rebuildRoutes(router)
+  }
+
+  function addMenu(router, type) {
+    if (type == "refresh") {
+      return restoreRoutes(router)
+    }
+    return loadRoutesFromMenu(router)
   }
 
   function clean() {
-    state.value.routerList.forEach(item => {
-      if (item) item()
-    })
+    state.value.routerList.forEach(fn => { if (fn) fn() })
+    state.value.routerList = []
     state.value = initState()
+    routesLoaded.value = false
     localStorage.removeItem('store')
   }
 
@@ -97,12 +135,23 @@ export const useAllDataStore = defineStore('allData', () => {
     state.value.token = val
   }
 
+  function updateRole(val) {
+    state.value.role = val
+  }
+
+  function updateUserInfo(val) {
+    state.value.userInfo = val
+  }
+
   return {
     state,
+    routesLoaded,
     selectMenu,
     updateTags,
     updateMenuList,
     updateToken,
+    updateRole,
+    updateUserInfo,
     addMenu,
     clean,
   }

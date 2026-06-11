@@ -19,6 +19,7 @@ function param2Obj(url) {
 let List = []
 const count = 200
 //模拟200条用户数据
+const roleOptions = ['admin', 'editor', 'visitor']
 for (let i = 0; i < count; i++) {
   List.push(
     Mock.mock({
@@ -28,6 +29,7 @@ for (let i = 0; i < count; i++) {
       'age|18-60': 1,
       birth: Mock.Random.date(),
       sex: Mock.Random.integer(0, 1),
+      role: roleOptions[Mock.Random.integer(0, 2)],
     })
   )
 }
@@ -96,14 +98,15 @@ export default {
    * @return {{code: number, data: {message: string}}}
    */
   createUser: config => {
-    const { name, addr, age, birth, sex } = JSON.parse(config.body)
+    const { name, addr, age, birth, sex, role } = JSON.parse(config.body)
     List.unshift({
       id: Mock.Random.guid(),
       name: name,
       addr: addr,
       age: age,
       birth: birth,
-      sex: sex
+      sex: sex,
+      role: role || 'visitor'
     })
     return {
       code: 200,
@@ -117,7 +120,7 @@ export default {
    * @return {{code: number, data: {message: string}}}
    */
   editUser: config => {
-    const { id, name, addr, age, birth, sex } = JSON.parse(config.body)
+    const { id, name, addr, age, birth, sex, role } = JSON.parse(config.body)
     const sex_num = parseInt(sex)
     List.some(u => {
       if (u.id === id) {
@@ -126,6 +129,7 @@ export default {
         u.age = age
         u.birth = birth
         u.sex = sex_num
+        u.role = role || u.role
         return true
       }
     })

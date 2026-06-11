@@ -23,6 +23,8 @@ const handleLogin = async () => {
     const res = await proxy.$api.getMenu(loginForm)
     store.updateMenuList(res.menuList)
     store.updateToken(res.token)
+    store.updateRole(res.role)
+    store.updateUserInfo(res.userInfo)
     store.addMenu(router)
     router.push({ name: 'home' })
   } catch (err) {

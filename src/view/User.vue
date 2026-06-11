@@ -13,15 +13,19 @@ const {proxy} = getCurrentInstance()
 const getUserData = async () => {
   try {
     const data = await proxy.$api.getUserData(userConfig)
+    const roleLabels = { admin: '超级管理员', editor: '编辑者', visitor: '访客' }
     tableData.value = data.list.map(item => ({
       ...item,
       sexLabel: item.sex ===1 ? '男' : '女',
+      roleLabel: roleLabels[item.role] || item.role,
     }))
     userConfig.total = data.count
   } catch (error) {
     console.log(error)
   }
 }
+const roleLabels = { admin: '超级管理员', editor: '编辑者', visitor: '访客' }
+
 const tableLabel = reactive([
   {
     prop:'name',
@@ -36,6 +40,10 @@ const tableLabel = reactive([
     label:'性别' 
   },
    {
+    prop:'roleLabel',
+    label:'角色',
+  },
+   {
     prop:'birth',
     label:'出生日期' ,
     width:200,
@@ -46,7 +54,7 @@ const tableLabel = reactive([
     width:500,
   },
    
- 
+  
 ])
 
 const formInline = reactive({
@@ -103,6 +111,7 @@ const formUser = reactive({
   sex:null,
   birth:'',
   addr:'',
+  role:'',
 })
 // 表单的验证规则
 const rules = reactive({
@@ -267,12 +276,23 @@ const handleEdit = (row) => {
           </el-col>
         </el-row>
         <el-row>
-          <el-form-item
-            label="地址"
-            prop="addr"
-          >
-            <el-input v-model="formUser.addr" placeholder="请输入地址" />
-          </el-form-item>
+          <el-col :span="12">
+            <el-form-item class="select-clearn" label="角色" prop="role">
+              <el-select v-model="formUser.role" placeholder="请选择角色" style="width: 100%">
+                <el-option label="超级管理员" value="admin" />
+                <el-option label="编辑者" value="editor" />
+                <el-option label="访客" value="visitor" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item
+              label="地址"
+              prop="addr"
+            >
+              <el-input v-model="formUser.addr" placeholder="请输入地址" />
+            </el-form-item>
+          </el-col>
         </el-row>
         <el-row style="justify-content: flex-end">
           <el-form-item>

@@ -9,6 +9,7 @@ import ElementPlus from 'element-plus'
 import "./api/mock.js"
 import api from "./api/api.js"
 import { useAllDataStore } from "@/stores/index.js"
+import { getRoleRoutes } from "@/config/roles.js"
 
 // Fix: if user manually types path without hash (e.g. /login), redirect to hash root
 if (window.location.pathname !== '/') {
@@ -33,7 +34,21 @@ router.beforeEach((to, from) => {
     return { name: 'home', replace: true }
   }
 
+  if (token && !store.routesLoaded && !whitelist.includes(to.name)) {
+    const restored = store.addMenu(router, "refresh")
+    if (restored) {
+      return { ...to, replace: true }
+    }
+    store.clean()
+    return { name: 'login', replace: true }
+  }
+
   if (!whitelist.includes(to.name) && !routeExists(to)) {
+    return { name: '404', replace: true }
+  }
+
+  const roleRoutes = getRoleRoutes(store.state.role)
+  if (token && !whitelist.includes(to.name) && to.name && !roleRoutes.includes(to.name)) {
     return { name: '404', replace: true }
   }
 })
@@ -49,8 +64,11 @@ app.config.globalProperties.$api = api
 if (store.state.menuList && store.state.menuList.length > 0) {
   store.addMenu(router)
 }
-store.addMenu(router, "refresh")
 app.use(router)
+
+if (store.state.token && !store.routesLoaded) {
+  store.addMenu(router, "refresh")
+}
 
 app.use(ElementPlus)
 

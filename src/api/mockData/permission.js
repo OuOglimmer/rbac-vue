@@ -6,6 +6,8 @@ export default {
       return {
         code: 200,
         data: {
+          role: 'admin',
+          userInfo: { name: 'admin', label: '超级管理员' },
           menuList: [
             {
               path: '/home',
@@ -66,6 +68,8 @@ export default {
       return {
         code: 200,
         data: {
+          role: 'editor',
+          userInfo: { name: 'editor', label: '编辑者' },
           menuList: [
             {
               path: '/home',
